@@ -51,10 +51,12 @@ def save_bottleneck_channel_grid(
         image = image.unsqueeze(0)
 
     register_hooks(model)
-    with torch.no_grad():
-        _ = model(image)
-    acts = get_activations(model)
-    remove_hooks(model)
+    try:
+        with torch.no_grad():
+            _ = model(image)
+        acts = get_activations(model)
+    finally:
+        remove_hooks(model)
 
     if layer_name not in acts:
         raise KeyError(f"Layer {layer_name!r} not in activations: {list(acts.keys())}")
@@ -127,10 +129,12 @@ def save_bottleneck_with_overlay(
         image = image.unsqueeze(0)
 
     register_hooks(model)
-    with torch.no_grad():
-        _ = model(image)
-    acts = get_activations(model)
-    remove_hooks(model)
+    try:
+        with torch.no_grad():
+            _ = model(image)
+        acts = get_activations(model)
+    finally:
+        remove_hooks(model)
 
     act = acts[layer_name]
     c = act.shape[1]

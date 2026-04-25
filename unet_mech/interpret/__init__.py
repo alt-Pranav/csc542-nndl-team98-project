@@ -9,6 +9,7 @@ from unet_mech.interpret.bottleneck_viz import (
     save_bottleneck_with_overlay,
 )
 from unet_mech.interpret.hooks import (
+    clear_activations,
     get_activations,
     print_architecture_reference,
     register_hooks,
@@ -18,6 +19,7 @@ from unet_mech.interpret.hooks import (
 __all__ = [
     "register_hooks",
     "remove_hooks",
+    "clear_activations",
     "get_activations",
     "print_architecture_reference",
     "save_bottleneck_channel_grid",

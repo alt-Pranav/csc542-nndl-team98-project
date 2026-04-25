@@ -12,7 +12,6 @@ from loguru import logger
 from torch.utils.data import DataLoader
 
 from unet_mech.metrics.segmentation import dice, iou
-from unet_mech.models.resnet18_unet import ResNet18UNet
 
 
 @dataclass
@@ -46,32 +45,44 @@ def _mean_metrics_over_loader(
     )
 
 
+def _named_hook_module(model: nn.Module, layer_name: str) -> nn.Module:
+    if hasattr(model, "hook_target_layers"):
+        for name, module in model.hook_target_layers():
+            if name == layer_name:
+                return module
+    if hasattr(model, layer_name):
+        module = getattr(model, layer_name)
+        if isinstance(module, nn.Module):
+            return module
+    raise KeyError(f"Could not find hook target {layer_name!r} on {type(model).__name__}")
+
+
 def _bottleneck_ablation_hook(channels: set[int]):
     def hook(module, inp, out: torch.Tensor):
-        m = out.clone()
-        for c in channels:
-            if 0 <= c < m.shape[1]:
-                m[:, c] = 0.0
-        return m
+        mask = torch.ones_like(out)
+        for channel in channels:
+            if 0 <= channel < mask.shape[1]:
+                mask[:, channel] = 0.0
+        return out * mask
 
     return hook
 
 
 @torch.no_grad()
 def evaluate_bottleneck_channel_ablation(
-    model: ResNet18UNet,
+    model: nn.Module,
     loader: DataLoader,
     device: str,
     channel_indices: Iterable[int],
+    layer_name: str = "enc_layer4",
 ) -> SegmentationEval:
     """
-    Zeros the given `encoder_layer4` (bottleneck) channels during the forward
+    Zeros the given bottleneck channels during the forward
     pass and returns mean batch IoU / Dice on the loader.
     """
     chans = {int(c) for c in channel_indices}
-    handle = model.encoder_layer4.register_forward_hook(
-        _bottleneck_ablation_hook(chans)
-    )
+    bottleneck = _named_hook_module(model, layer_name)
+    handle = bottleneck.register_forward_hook(_bottleneck_ablation_hook(chans))
     try:
         return _mean_metrics_over_loader(model, loader, device)
     finally:
@@ -86,11 +97,12 @@ class AblationSweepResult:
 
 @torch.no_grad()
 def ablation_sweep_bottleneck(
-    model: ResNet18UNet,
+    model: nn.Module,
     loader: DataLoader,
     device: str,
     channel_ids: List[int] | range,
     csv_path: str | Path | None = None,
+    layer_name: str = "enc_layer4",
 ) -> AblationSweepResult:
     """
     One baseline pass, then one forward pass per channel with only that channel
@@ -104,7 +116,13 @@ def ablation_sweep_bottleneck(
 
     rows: list[dict] = []
     for c in channel_ids:
-        ev = evaluate_bottleneck_channel_ablation(model, loader, device, [c])
+        ev = evaluate_bottleneck_channel_ablation(
+            model,
+            loader,
+            device,
+            [c],
+            layer_name=layer_name,
+        )
         row = {
             "channel": c,
             "iou": ev.mean_iou,

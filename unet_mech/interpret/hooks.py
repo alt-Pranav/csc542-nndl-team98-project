@@ -34,6 +34,8 @@ def register_hooks(
         model._activations = {}
     if not hasattr(model, "_hooks"):
         model._hooks = []
+    remove_hooks(model)
+    clear_activations(model)
 
     if named_modules is None:
         if not isinstance(model, _HookableModel):
@@ -71,9 +73,10 @@ def print_architecture_reference(
     device: str,
     model_title: str = "ResNet18-Encoder U-Net",
     named_modules: List[Tuple[str, nn.Module]] | None = None,
+    input_channels: int = 3,
 ) -> None:
     register_hooks(model, named_modules=named_modules)
-    dummy = torch.zeros(1, 3, img_size, img_size, device=device)
+    dummy = torch.zeros(1, input_channels, img_size, img_size, device=device)
     with torch.no_grad():
         _ = model(dummy)
     acts = get_activations(model)

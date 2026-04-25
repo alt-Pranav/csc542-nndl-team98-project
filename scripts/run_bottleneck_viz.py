@@ -35,6 +35,8 @@ def parse_args():
     p.add_argument(
         "--selection", choices=["first", "top_abs_mean"], default="top_abs_mean"
     )
+    p.add_argument("--num-samples", type=int, default=3)
+    p.add_argument("--layer-name", type=str, default="enc_layer4")
     p.add_argument("--overlay-ch", type=int, default=0, help="Also save single-ch overlay; set -1 to skip")
     return p.parse_args()
 
@@ -52,32 +54,37 @@ def main():
         val_frac=cfg["val_frac"],
         seed=cfg["seed"],
     )
-    # one sample from val
-    it = iter(val_loader)
-    image, _mask = next(it)
-    model = ResNet18UNet(pretrained=True).to(device)
+    model = ResNet18UNet(pretrained=False).to(device)
     ck = torch.load(args.ckpt, map_location=device)
     model.load_state_dict(ck["state_dict"])
     model.eval()
 
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    save_bottleneck_channel_grid(
-        model,
-        image[0],
-        device,
-        save_path=out / "bottleneck_grid.png",
-        max_channels=args.max_ch,
-        selection=args.selection,  # type: ignore[arg-type]
-    )
-    if args.overlay_ch >= 0:
-        save_bottleneck_with_overlay(
+
+    written = 0
+    for image, _mask in val_loader:
+        save_bottleneck_channel_grid(
             model,
             image[0],
             device,
-            save_path=out / f"overlay_ch{args.overlay_ch}.png",
-            channel=args.overlay_ch,
+            save_path=out / f"sample_{written:02d}_bottleneck_grid.png",
+            layer_name=args.layer_name,
+            max_channels=args.max_ch,
+            selection=args.selection,  # type: ignore[arg-type]
         )
+        if args.overlay_ch >= 0:
+            save_bottleneck_with_overlay(
+                model,
+                image[0],
+                device,
+                save_path=out / f"sample_{written:02d}_overlay_ch{args.overlay_ch}.png",
+                layer_name=args.layer_name,
+                channel=args.overlay_ch,
+            )
+        written += 1
+        if written >= args.num_samples:
+            break
     logger.info(f"Wrote visualisations under {out}")
 
 

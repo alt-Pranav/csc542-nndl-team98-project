@@ -32,6 +32,7 @@ def parse_args():
     p.add_argument("--to-ch", type=int, default=None, help="exclusive end for a range")
     p.add_argument("--out-csv", type=str, default="outputs/ablation_sweep.csv")
     p.add_argument("--split", choices=["val", "test"], default="val")
+    p.add_argument("--layer-name", type=str, default="enc_layer4")
     return p.parse_args()
 
 
@@ -56,7 +57,7 @@ def main():
     )
     loader = val_loader if args.split == "val" else test_loader
 
-    model = ResNet18UNet(pretrained=True).to(device)
+    model = ResNet18UNet(pretrained=False).to(device)
     ck = torch.load(args.ckpt, map_location=device)
     model.load_state_dict(ck["state_dict"])
 
@@ -64,7 +65,12 @@ def main():
         f"Running ablation on {args.split} split, channels: {ch_list[:20]}{'...' if len(ch_list) > 20 else ''}"
     )
     res = ablation_sweep_bottleneck(
-        model, loader, device, ch_list, csv_path=args.out_csv
+        model,
+        loader,
+        device,
+        ch_list,
+        csv_path=args.out_csv,
+        layer_name=args.layer_name,
     )
     logger.info(
         f"Done. baseline IoU={res.baseline.mean_iou:.4f}  rows={len(res.rows)}  csv={args.out_csv}"
