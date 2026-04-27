@@ -18,7 +18,7 @@ class MontgomeryDataset(Dataset):
     """
     PyTorch Dataset for Montgomery CXR images.
 
-    * Images are opened with .convert("RGB") → 3 channels for ResNet18.
+    * Images are opened with .convert("L") → 3 channels for ResNet18.
     * Normalisation uses ImageNet mean/std (applied in make_transforms).
     * Masks are single-channel binary float tensors.
     """
@@ -60,7 +60,7 @@ class MontgomeryDataset(Dataset):
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         img_path, left_path, right_path = self.samples[idx]
 
-        image = Image.open(img_path).convert("RGB").resize(
+        image = Image.open(img_path).convert("L").resize(
             (self.img_size, self.img_size), _resampling("BILINEAR")
         )
 

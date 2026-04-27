@@ -59,7 +59,7 @@ def make_transforms(
     train_img_tf = transforms.Compose(
         [
             transforms.ToTensor(),
-            transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
+            transforms.Normalize([0.5], [0.5]),
         ]
     )
 
@@ -72,7 +72,7 @@ def make_transforms(
     val_img_tf = transforms.Compose(
         [
             transforms.ToTensor(),
-            transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
+            transforms.Normalize([0.5], [0.5]),
         ]
     )
 
