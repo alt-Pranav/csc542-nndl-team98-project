@@ -19,7 +19,7 @@ from unet_mech.interpret.bottleneck_viz import (
     save_bottleneck_channel_grid,
     save_bottleneck_with_overlay,
 )
-from unet_mech.models import ResNet18UNet
+from unet_mech.models import ResNet18UNet, BabyUNet
 
 
 def parse_args():
@@ -54,7 +54,7 @@ def main():
         val_frac=cfg["val_frac"],
         seed=cfg["seed"],
     )
-    model = ResNet18UNet(pretrained=False).to(device)
+    model = BabyUNet(pretrained=False).to(device)
     ck = torch.load(args.ckpt, map_location=device)
     model.load_state_dict(ck["state_dict"])
     model.eval()

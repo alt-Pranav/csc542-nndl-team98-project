@@ -4,3 +4,7 @@ __pytest_cache__/
 *.ipynb_checkpoints/
 .venv/
 /data/
+diff.patch
+images_Comparison.png
+images_Comparison2.png
+projectWorkSplitUp.png

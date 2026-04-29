@@ -15,6 +15,7 @@ from unet_mech.interpret.hooks import (
     register_hooks,
     remove_hooks,
 )
+from unet_mech.interpret.sparsity import compute_sparsity_scores
 
 __all__ = [
     "register_hooks",
@@ -28,4 +29,5 @@ __all__ = [
     "ablation_sweep_bottleneck",
     "AblationSweepResult",
     "SegmentationEval",
+    "compute_sparsity_scores",
 ]

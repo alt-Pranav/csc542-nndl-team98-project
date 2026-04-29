@@ -11,7 +11,6 @@ from torchvision import transforms
 from torchvision.transforms import InterpolationMode
 from torchvision.transforms import functional as TF
 
-from unet_mech.config import IMAGENET_MEAN, IMAGENET_STD
 from unet_mech.data.dataset import MontgomeryDataset
 
 
@@ -134,7 +133,7 @@ def build_dataloaders(
 
             image = (
                 Image.open(img_path)
-                .convert("RGB")
+                .convert("L")
                 .resize((ds.img_size, ds.img_size), _resampling("BILINEAR"))
             )
             left = np.array(

@@ -16,7 +16,7 @@ from loguru import logger
 from unet_mech.config import DEFAULT_CFG
 from unet_mech.data import build_dataloaders, download_montgomery
 from unet_mech.interpret.ablation import ablation_sweep_bottleneck
-from unet_mech.models import ResNet18UNet
+from unet_mech.models import ResNet18UNet, BabyUNet
 
 
 def parse_args():
@@ -57,7 +57,7 @@ def main():
     )
     loader = val_loader if args.split == "val" else test_loader
 
-    model = ResNet18UNet(pretrained=False).to(device)
+    model = BabyUNet(pretrained=False).to(device)
     ck = torch.load(args.ckpt, map_location=device)
     model.load_state_dict(ck["state_dict"])
 
